@@ -1,0 +1,15 @@
+{
+  "orderId": "BD2678",
+  "orderDate": "2/28/2025, 7:39:37 PM",
+  "items": [
+    {
+      "name": "Manti",
+      "quantity": 1,
+      "price": 12.99,
+      "totalPrice": 12.99
+    }
+  ],
+  "total": 12.99,
+  "deliveryTime": "2/28/2025, 10:30:00 PM",
+  "status": "Pending Payment"
+}

@@ -1,0 +1,15 @@
+{
+  "orderId": "TS4203",
+  "orderDate": "2/28/2025, 7:12:51 PM",
+  "items": [
+    {
+      "name": "Plov",
+      "quantity": 1,
+      "price": 16.99,
+      "totalPrice": 16.99
+    }
+  ],
+  "total": 16.99,
+  "deliveryTime": "2/28/2025, 10:30:00 PM",
+  "status": "Pending Payment"
+}

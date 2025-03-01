@@ -5,99 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Manager</title>
     <style>
-        /* Previous styles remain the same */
-        .debug-info {
-            padding: 20px;
-            background: #fff;
-            margin: 20px 0;
-            border-radius: 5px;
-        }
-        .error {
-            color: red;
-            padding: 10px;
-            margin: 10px 0;
-        }
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .order-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .order-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .status { padding: 5px 10px; border-radius: 5px; }
+        .pending { background: #ffd700; }
+        .paid { background: #90EE90; }
+        #status { color: #666; margin-top: 20px; }
     </style>
 </head>
 <body>
     <h1>Order Manager</h1>
     <button onclick="loadOrders()">Refresh Orders</button>
-    <div class="debug-info" id="debug"></div>
+    <div id="status"></div>
     <div class="order-container" id="orders"></div>
 
     <script>
+        // REPLACE THESE VALUES
+        const GITHUB_USERNAME = 'Jana887860';
+        const REPO_NAME = 'silk-road-kitchen-orders';
+        const ORDERS_DIR = 'orders';
+
         async function loadOrders() {
-            const debugDiv = document.getElementById('debug');
+            const statusEl = document.getElementById('status');
             const ordersContainer = document.getElementById('orders');
             
             try {
-                debugDiv.innerHTML = '🔄 Fetching directory listing...';
+                statusEl.textContent = 'Loading orders...';
                 ordersContainer.innerHTML = '';
 
-                // 1. Try to get directory listing
-                const dirResponse = await fetch('orders/');
-                if (!dirResponse.ok) {
-                    throw new Error(`Directory request failed: ${dirResponse.status} ${dirResponse.statusText}`);
+                // 1. Get list of order files from GitHub API
+                const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${ORDERS_DIR}`;
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`GitHub API Error: ${response.status} ${response.statusText}`);
                 }
 
-                // 2. Parse directory content
-                const html = await dirResponse.text();
-                debugDiv.innerHTML += `<br>✅ Directory listing received (${html.length} bytes)`;
-                
-                // 3. Extract JSON files
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const links = [...doc.querySelectorAll('a')];
-                const jsonFiles = links
-                    .filter(a => a.href.endsWith('.json'))
-                    .map(a => a.href.split('/').pop());
-
-                debugDiv.innerHTML += `<br>📁 Found ${jsonFiles.length} JSON files: ${jsonFiles.join(', ')}`;
+                const files = await response.json();
+                const jsonFiles = files.filter(file => file.name.endsWith('.json'));
 
                 if (jsonFiles.length === 0) {
                     throw new Error('No JSON files found in orders directory');
                 }
 
-                // 4. Load and display orders
+                // 2. Load each order file
                 for (const file of jsonFiles) {
-                    try {
-                        debugDiv.innerHTML += `<br>🔍 Loading: ${file}...`;
-                        const orderResponse = await fetch(`orders/${file}`);
-                        
-                        if (!orderResponse.ok) {
-                            throw new Error(`Failed to load ${file}: ${orderResponse.status}`);
-                        }
-                        
-                        const order = await orderResponse.json();
-                        debugDiv.innerHTML += `<br>✅ Loaded ${order.orderId}`;
-
-                        // Create order card
-                        const orderCard = document.createElement('div');
-                        orderCard.className = 'order-card';
-                        orderCard.innerHTML = `
-                            <h3>${order.orderId}</h3>
-                            <p>Date: ${order.orderDate}</p>
-                            <div>Items:
-                                <ul>
-                                    ${order.items.map(item => `
-                                        <li>${item.name} (x${item.quantity}) - $${item.price}</li>
-                                    `).join('')}
-                                </ul>
-                            </div>
-                            <p>Total: $${order.total.toFixed(2)}</p>
-                            <p>Delivery: ${order.deliveryTime}</p>
-                            <div class="status ${order.status.toLowerCase().includes('paid') ? 'paid' : 'pending'}">
-                                ${order.status}
-                            </div>
-                        `;
-                        ordersContainer.appendChild(orderCard);
-                    } catch (fileError) {
-                        debugDiv.innerHTML += `<br>❌ Error with ${file}: ${fileError.message}`;
-                    }
+                    const orderResponse = await fetch(file.download_url);
+                    if (!orderResponse.ok) continue;
+                    
+                    const order = await orderResponse.json();
+                    const orderCard = document.createElement('div');
+                    orderCard.className = 'order-card';
+                    orderCard.innerHTML = `
+                        <h3>${order.orderId}</h3>
+                        <p>Date: ${order.orderDate}</p>
+                        <p>Items: ${order.items.map(item => `${item.name} (x${item.quantity})`).join(', ')}</p>
+                        <p>Total: $${order.total}</p>
+                        <p>Delivery: ${order.deliveryTime}</p>
+                        <div class="status ${order.status === 'Paid' ? 'paid' : 'pending'}">
+                            ${order.status}
+                        </div>
+                    `;
+                    ordersContainer.appendChild(orderCard);
                 }
 
+                statusEl.textContent = `Loaded ${jsonFiles.length} orders`;
+                
             } catch (error) {
-                debugDiv.innerHTML += `<br><div class="error">❌ Critical Error: ${error.message}</div>`;
+                statusEl.innerHTML = `<span style="color: red">Error: ${error.message}</span>`;
                 console.error('Error:', error);
             }
         }

@@ -63,9 +63,6 @@
                         <p>Items: ${order.items.map(item => `${item.name} (x${item.quantity})`).join(', ')}</p>
                         <p>Total: $${order.total}</p>
                         <p>Delivery: ${order.deliveryTime}</p>
-                        <div class="status ${order.status === 'Paid' ? 'paid' : 'pending'}">
-                            ${order.status}
-                        </div>
                     `;
                     ordersContainer.appendChild(orderCard);
                 }

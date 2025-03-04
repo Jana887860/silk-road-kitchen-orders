@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Manager</title>
     <style>
-        /* ... (keep existing styles the same) ... */
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .order-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .order-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .status { padding: 5px 10px; border-radius: 5px; }
+        .pending { background: #ffd700; }
+        .paid { background: #90EE90; }
+        #status { color: #666; margin-top: 20px; }
         .order-number {
             font-size: 0.8em;
             color: #666;
@@ -32,21 +38,27 @@
             try {
                 statusEl.textContent = 'Loading orders...';
                 ordersContainer.innerHTML = '';
-                const cutoff = Date.now() - (24 * 60 * 60 * 1000);
-                let orderNumber = 1; // Sequential counter
+                const cutoff = Date.now() - (24 * 60 * 60 * 1000); // 24 hours ago
+                let orderNumber = 1;
 
+                // Get list of order files from GitHub API
                 const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${ORDERS_DIR}`;
                 const response = await fetch(apiUrl);
                 
-                if (!response.ok) throw new Error(`GitHub API Error: ${response.status} ${response.statusText}`);
+                if (!response.ok) {
+                    throw new Error(`GitHub API Error: ${response.status} ${response.statusText}`);
+                }
 
                 const files = await response.json();
                 const jsonFiles = files.filter(file => file.name.endsWith('.json'));
 
-                if (jsonFiles.length === 0) throw new Error('No JSON files found in orders directory');
+                if (jsonFiles.length === 0) {
+                    throw new Error('No JSON files found in orders directory');
+                }
 
                 let validOrders = 0;
 
+                // Load and display orders
                 for (const file of jsonFiles) {
                     const orderResponse = await fetch(file.download_url);
                     if (!orderResponse.ok) continue;
@@ -67,11 +79,11 @@
                         `;
                         ordersContainer.appendChild(orderCard);
                         validOrders++;
-                        orderNumber++; // Increment counter
+                        orderNumber++;
                     }
                 }
 
-                statusEl.textContent = `Loaded ${validOrders} orders from past 24 hours`;
+                statusEl.textContent = `Loaded ${validOrders} recent orders (past 24 hours)`;
                 
             } catch (error) {
                 statusEl.innerHTML = `<span style="color: red">Error: ${error.message}</span>`;
@@ -79,7 +91,7 @@
             }
         }
 
-        // Initial load
+        // Initial load when page opens
         loadOrders();
     </script>
 </body>

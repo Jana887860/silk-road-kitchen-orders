@@ -1,0 +1,15 @@
+{
+  "orderId": "CH2707",
+  "orderDate": "3/3/2025, 5:34:13 PM",
+  "items": [
+    {
+      "name": "Plov",
+      "quantity": 1,
+      "price": 16.99,
+      "totalPrice": 16.99
+    }
+  ],
+  "total": 16.99,
+  "deliveryTime": "3/3/2025, 9:30:00 PM",
+  "status": "Pending Payment"
+}

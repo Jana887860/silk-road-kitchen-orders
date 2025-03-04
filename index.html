@@ -2,20 +2,99 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Order Manager</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .order-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .order-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .status { padding: 5px 10px; border-radius: 5px; }
-        .pending { background: #ffd700; }
-        .paid { background: #90EE90; }
-        #status { color: #666; margin-top: 20px; }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 15px;
+            font-size: 1.125rem;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            color: #222;
+        }
+        .order-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        .order-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            break-inside: avoid;
+        }
         .order-number {
-            font-size: 0.8em;
+            font-size: 0.9rem;
             color: #666;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        #status {
+            color: #666;
+            margin: 25px 0;
+            font-size: 1rem;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .order-card h3 {
+            font-size: 1.4rem;
+            margin: 0 0 10px 0;
+            color: #1a1a1a;
+        }
+        .order-card p {
+            margin: 8px 0;
+            font-size: 1rem;
+            color: #444;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+                font-size: 1rem;
+            }
+            h1 {
+                font-size: 1.75rem;
+            }
+            .order-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            .order-card {
+                padding: 20px;
+            }
+            button {
+                width: 100%;
+                padding: 15px;
+                font-size: 1.1rem;
+            }
+        }
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            .order-card {
+                padding: 18px;
+            }
+            .order-card h3 {
+                font-size: 1.3rem;
+            }
         }
     </style>
 </head>
@@ -38,27 +117,21 @@
             try {
                 statusEl.textContent = 'Loading orders...';
                 ordersContainer.innerHTML = '';
-                const cutoff = Date.now() - (24 * 60 * 60 * 1000); // 24 hours ago
+                const cutoff = Date.now() - (24 * 60 * 60 * 1000);
                 let orderNumber = 1;
 
-                // Get list of order files from GitHub API
                 const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${ORDERS_DIR}`;
                 const response = await fetch(apiUrl);
                 
-                if (!response.ok) {
-                    throw new Error(`GitHub API Error: ${response.status} ${response.statusText}`);
-                }
+                if (!response.ok) throw new Error(`GitHub API Error: ${response.status} ${response.statusText}`);
 
                 const files = await response.json();
                 const jsonFiles = files.filter(file => file.name.endsWith('.json'));
 
-                if (jsonFiles.length === 0) {
-                    throw new Error('No JSON files found in orders directory');
-                }
+                if (jsonFiles.length === 0) throw new Error('No JSON files found in orders directory');
 
                 let validOrders = 0;
 
-                // Load and display orders
                 for (const file of jsonFiles) {
                     const orderResponse = await fetch(file.download_url);
                     if (!orderResponse.ok) continue;
@@ -72,10 +145,10 @@
                         orderCard.innerHTML = `
                             <div class="order-number">Order #${orderNumber}</div>
                             <h3>${order.orderId}</h3>
-                            <p>Date: ${order.orderDate}</p>
-                            <p>Items: ${order.items.map(item => `${item.name} (x${item.quantity})`).join(', ')}</p>
-                            <p>Total: $${order.total}</p>
-                            <p>Delivery: ${order.deliveryTime}</p>
+                            <p><strong>Date:</strong> ${order.orderDate}</p>
+                            <p><strong>Items:</strong> ${order.items.map(item => `${item.name} (x${item.quantity})`).join(', ')}</p>
+                            <p><strong>Total:</strong> $${order.total}</p>
+                            <p><strong>Delivery:</strong> ${order.deliveryTime}</p>
                         `;
                         ordersContainer.appendChild(orderCard);
                         validOrders++;
@@ -91,7 +164,7 @@
             }
         }
 
-        // Initial load when page opens
+        // Initial load
         loadOrders();
     </script>
 </body>

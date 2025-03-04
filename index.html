@@ -33,6 +33,7 @@
             try {
                 statusEl.textContent = 'Loading orders...';
                 ordersContainer.innerHTML = '';
+                const cutoff = Date.now() - (24 * 60 * 60 * 1000); // 24 hours ago
 
                 // 1. Get list of order files from GitHub API
                 const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${ORDERS_DIR}`;
@@ -49,25 +50,32 @@
                     throw new Error('No JSON files found in orders directory');
                 }
 
-                // 2. Load each order file
+                let validOrders = 0;
+
+                // 2. Load and filter orders
                 for (const file of jsonFiles) {
                     const orderResponse = await fetch(file.download_url);
                     if (!orderResponse.ok) continue;
                     
                     const order = await orderResponse.json();
-                    const orderCard = document.createElement('div');
-                    orderCard.className = 'order-card';
-                    orderCard.innerHTML = `
-                        <h3>${order.orderId}</h3>
-                        <p>Date: ${order.orderDate}</p>
-                        <p>Items: ${order.items.map(item => `${item.name} (x${item.quantity})`).join(', ')}</p>
-                        <p>Total: $${order.total}</p>
-                        <p>Delivery: ${order.deliveryTime}</p>
-                    `;
-                    ordersContainer.appendChild(orderCard);
+                    const orderDate = new Date(order.orderDate);
+                    
+                    if (orderDate.getTime() >= cutoff) {
+                        const orderCard = document.createElement('div');
+                        orderCard.className = 'order-card';
+                        orderCard.innerHTML = `
+                            <h3>${order.orderId}</h3>
+                            <p>Date: ${order.orderDate}</p>
+                            <p>Items: ${order.items.map(item => `${item.name} (x${item.quantity})`).join(', ')}</p>
+                            <p>Total: $${order.total}</p>
+                            <p>Delivery: ${order.deliveryTime}</p>
+                        `;
+                        ordersContainer.appendChild(orderCard);
+                        validOrders++;
+                    }
                 }
 
-                statusEl.textContent = `Loaded ${jsonFiles.length} orders`;
+                statusEl.textContent = `Loaded ${validOrders} orders from past 24 hours`;
                 
             } catch (error) {
                 statusEl.innerHTML = `<span style="color: red">Error: ${error.message}</span>`;
